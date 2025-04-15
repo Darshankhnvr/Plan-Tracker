@@ -1,23 +1,51 @@
-"use client"
-import { useState } from 'react'
+"use client";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [tasks, setTasks] = useState([])
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
 
-  const handleAddTask = () => {
-    if (!title.trim()) return
-    const newTask = { id: Date.now(), title, description }
-    setTasks([...tasks, newTask])
-    setTitle('')
-    setDescription('')
-  }
+  useEffect (() => {
+    fetchTasks();
+  },[]);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await fetch("/api/tasks");
+      const data = await res.json();
+      setTasks(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleAddTask = async () => {
+    if (!title.trim()) return;
+    try {
+      const res = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description }),
+      });
+
+      if (res.ok) {
+        const newTask = await res.json();
+        setTasks([...tasks, newTask]);
+        setTitle("");
+        setDescription("");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-400 p-6">
       <div className="max-w-xl mx-auto bg-slate-500 shadow-xl rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-center mb-4 text-slate-700">📝 Daily Tasks Tracker</h1>
+        <h1 className="text-2xl font-bold text-center mb-4 text-slate-700">
+          📝 Daily Tasks Tracker
+        </h1>
         <div className="space-y-4">
           <input
             type="text"
@@ -46,8 +74,10 @@ export default function Home() {
           ) : (
             <ul className="space-y-3">
               {tasks.map((task) => (
-                <li key={task.id} className="p-4 bg-gray-50 rounded shadow">
-                  <h2 className="text-lg font-semibold text-slate-500">{task.title}</h2>
+                <li key={task._id} className="p-4 bg-gray-50 rounded shadow">
+                  <h2 className="text-lg font-semibold text-slate-500">
+                    {task.title}
+                  </h2>
                   <p className="text-gray-600">{task.description}</p>
                 </li>
               ))}
@@ -55,7 +85,6 @@ export default function Home() {
           )}
         </div>
       </div>
-
     </div>
-  )
+  );
 }
